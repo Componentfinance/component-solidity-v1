@@ -17,11 +17,11 @@ import "./Assimilators.sol";
 
 import "./UnsafeMath64x64.sol";
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
-library ShellMath {
+library ComponentMath {
 
     int128 constant ONE = 0x10000000000000000;
     int128 constant MAX = 0x4000000000000000; // .25 in layman's terms
@@ -98,7 +98,7 @@ library ShellMath {
     }
 
     function calculateTrade (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage Component,
         int128 _oGLiq,
         int128 _nGLiq,
         int128[] memory _oBals,
@@ -109,10 +109,10 @@ library ShellMath {
 
         outputAmt_ = - _inputAmt;
 
-        int128 _lambda = shell.lambda;
-        int128 _beta = shell.beta;
-        int128 _delta = shell.delta;
-        int128[] memory _weights = shell.weights;
+        int128 _lambda = Component.lambda;
+        int128 _beta = Component.beta;
+        int128 _delta = Component.delta;
+        int128[] memory _weights = Component.weights;
 
         int128 _omega = calculateFee(_oGLiq, _oBals, _beta, _delta, _weights);
         int128 _psi;
@@ -130,7 +130,7 @@ library ShellMath {
 
                 _nBals[_outputIndex] = _oBals[_outputIndex] + outputAmt_;
 
-                enforceHalts(shell, _oGLiq, _nGLiq, _oBals, _nBals, _weights);
+                enforceHalts(Component, _oGLiq, _nGLiq, _oBals, _nBals, _weights);
                 
                 enforceSwapInvariant(_oGLiq, _omega, _nGLiq, _psi);
 
@@ -146,7 +146,7 @@ library ShellMath {
 
         }
 
-        revert("Shell/swap-convergence-failed");
+        revert("Component/swap-convergence-failed");
 
     }
     
@@ -163,28 +163,28 @@ library ShellMath {
 
         int128 _diff = _nextUtil - _prevUtil;
 
-        require(0 < _diff || _diff >= MAX_DIFF, "Shell/swap-invariant-violation");
+        require(0 < _diff || _diff >= MAX_DIFF, "Component/swap-invariant-violation");
         
     }
 
     function calculateLiquidityMembrane (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage Component,
         int128 _oGLiq,
         int128 _nGLiq,
         int128[] memory _oBals,
         int128[] memory _nBals
-    ) internal view returns (int128 shells_) {
+    ) internal view returns (int128 Components_) {
 
-        enforceHalts(shell, _oGLiq, _nGLiq, _oBals, _nBals, shell.weights);
+        enforceHalts(Component, _oGLiq, _nGLiq, _oBals, _nBals, Component.weights);
         
         int128 _omega;
         int128 _psi;
         
         {
             
-            int128 _beta = shell.beta;
-            int128 _delta = shell.delta;
-            int128[] memory _weights = shell.weights;
+            int128 _beta = Component.beta;
+            int128 _delta = Component.delta;
+            int128[] memory _weights = Component.weights;
 
             _omega = calculateFee(_oGLiq, _oBals, _beta, _delta, _weights);
             _psi = calculateFee(_nGLiq, _nBals, _beta, _delta, _weights);
@@ -194,62 +194,62 @@ library ShellMath {
         int128 _feeDiff = _psi.sub(_omega);
         int128 _liqDiff = _nGLiq.sub(_oGLiq);
         int128 _oUtil = _oGLiq.sub(_omega);
-        int128 _totalShells = shell.totalSupply.divu(1e18);
-        int128 _shellMultiplier;
+        int128 _totalComponents = Component.totalSupply.divu(1e18);
+        int128 _ComponentMultiplier;
 
-        if (_totalShells == 0) {
+        if (_totalComponents == 0) {
 
-            shells_ = _nGLiq.sub(_psi);
+            Components_ = _nGLiq.sub(_psi);
 
         } else if (_feeDiff >= 0) {
 
-            _shellMultiplier = _liqDiff.sub(_feeDiff).div(_oUtil);
+            _ComponentMultiplier = _liqDiff.sub(_feeDiff).div(_oUtil);
 
         } else {
             
-            _shellMultiplier = _liqDiff.sub(shell.lambda.mul(_feeDiff));
+            _ComponentMultiplier = _liqDiff.sub(Component.lambda.mul(_feeDiff));
             
-            _shellMultiplier = _shellMultiplier.div(_oUtil);
+            _ComponentMultiplier = _ComponentMultiplier.div(_oUtil);
 
         }
 
-        if (_totalShells != 0) {
+        if (_totalComponents != 0) {
 
-            shells_ = _totalShells.us_mul(_shellMultiplier);
+            Components_ = _totalComponents.us_mul(_ComponentMultiplier);
             
-            enforceLiquidityInvariant(_totalShells, shells_, _oGLiq, _nGLiq, _omega, _psi);
+            enforceLiquidityInvariant(_totalComponents, Components_, _oGLiq, _nGLiq, _omega, _psi);
 
         }
 
     }
     
     function enforceLiquidityInvariant (
-        int128 _totalShells,
-        int128 _newShells,
+        int128 _totalComponents,
+        int128 _newComponents,
         int128 _oGLiq,
         int128 _nGLiq,
         int128 _omega,
         int128 _psi
     ) internal view {
         
-        if (_totalShells == 0 || 0 == _totalShells + _newShells) return;
+        if (_totalComponents == 0 || 0 == _totalComponents + _newComponents) return;
         
-        int128 _prevUtilPerShell = _oGLiq
+        int128 _prevUtilPerComponent = _oGLiq
             .sub(_omega)
-            .div(_totalShells);
+            .div(_totalComponents);
             
-        int128 _nextUtilPerShell = _nGLiq
+        int128 _nextUtilPerComponent = _nGLiq
             .sub(_psi)
-            .div(_totalShells.add(_newShells));
+            .div(_totalComponents.add(_newComponents));
 
-        int128 _diff = _nextUtilPerShell - _prevUtilPerShell;
+        int128 _diff = _nextUtilPerComponent - _prevUtilPerComponent;
 
-        require(0 < _diff || _diff >= MAX_DIFF, "Shell/liquidity-invariant-violation");
+        require(0 < _diff || _diff >= MAX_DIFF, "Component/liquidity-invariant-violation");
         
     }
 
     function enforceHalts (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage Component,
         int128 _oGLiq,
         int128 _nGLiq,
         int128[] memory _oBals,
@@ -258,7 +258,7 @@ library ShellMath {
     ) private view {
 
         uint256 _length = _nBals.length;
-        int128 _alpha = shell.alpha;
+        int128 _alpha = Component.alpha;
 
         for (uint i = 0; i < _length; i++) {
 
@@ -274,8 +274,8 @@ library ShellMath {
 
                     int128 _oHalt = _oGLiq.us_mul(_weights[i]).us_mul(_upperAlpha);
 
-                    if (_oBals[i] < _oHalt) revert("Shell/upper-halt");
-                    if (_nBals[i] - _nHalt > _oBals[i] - _oHalt) revert("Shell/upper-halt");
+                    if (_oBals[i] < _oHalt) revert("Component/upper-halt");
+                    if (_nBals[i] - _nHalt > _oBals[i] - _oHalt) revert("Component/upper-halt");
 
                 }
 
@@ -289,8 +289,8 @@ library ShellMath {
 
                     int128 _oHalt = _oGLiq.us_mul(_weights[i]).us_mul(_lowerAlpha);
 
-                    if (_oBals[i] > _oHalt) revert("Shell/lower-halt");
-                    if (_nHalt - _nBals[i] > _oHalt - _oBals[i]) revert("Shell/lower-halt");
+                    if (_oBals[i] > _oHalt) revert("Component/lower-halt");
+                    if (_nHalt - _nBals[i] > _oHalt - _oBals[i]) revert("Component/lower-halt");
 
                 }
             }

@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./Assimilators.sol";
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
 import "./UnsafeMath64x64.sol";
 
@@ -19,37 +19,37 @@ library PartitionedLiquidity {
     int128 constant ONE = 0x10000000000000000;
 
     function partition (
-        ShellStorage.Shell storage shell,
-        mapping (address => ShellStorage.PartitionTicket) storage partitionTickets
+        ComponentStorage.Component storage component,
+        mapping (address => ComponentStorage.PartitionTicket) storage partitionTickets
     ) external {
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
 
-        ShellStorage.PartitionTicket storage totalSupplyTicket = partitionTickets[address(this)];
+        ComponentStorage.PartitionTicket storage totalSupplyTicket = partitionTickets[address(this)];
 
         totalSupplyTicket.initialized = true;
 
-        for (uint i = 0; i < _length; i++) totalSupplyTicket.claims.push(shell.totalSupply);
+        for (uint i = 0; i < _length; i++) totalSupplyTicket.claims.push(component.totalSupply);
 
         emit PoolPartitioned(true);
 
     }
 
     function viewPartitionClaims (
-        ShellStorage.Shell storage shell,
-        mapping (address => ShellStorage.PartitionTicket) storage partitionTickets,
+        ComponentStorage.Component storage component,
+        mapping (address => ComponentStorage.PartitionTicket) storage partitionTickets,
         address _addr
     ) external view returns (
         uint[] memory claims_
     ) {
 
-        ShellStorage.PartitionTicket storage ticket = partitionTickets[_addr];
+        ComponentStorage.PartitionTicket storage ticket = partitionTickets[_addr];
 
         if (ticket.initialized) return ticket.claims;
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
         uint[] memory claims_ = new uint[](_length);
-        uint _balance = shell.balances[msg.sender];
+        uint _balance = component.balances[msg.sender];
 
         for (uint i = 0; i < _length; i++) claims_[i] = _balance;
 
@@ -58,19 +58,19 @@ library PartitionedLiquidity {
     }
 
     function partitionedWithdraw (
-        ShellStorage.Shell storage shell,
-        mapping (address => ShellStorage.PartitionTicket) storage partitionTickets,
+        ComponentStorage.Component storage component,
+        mapping (address => ComponentStorage.PartitionTicket) storage partitionTickets,
         address[] calldata _derivatives,
         uint[] calldata _withdrawals
     ) external returns (
         uint[] memory
     ) {
 
-        uint _length = shell.assets.length;
-        uint _balance = shell.balances[msg.sender];
+        uint _length = component.assets.length;
+        uint _balance = component.balances[msg.sender];
 
-        ShellStorage.PartitionTicket storage totalSuppliesTicket = partitionTickets[address(this)];
-        ShellStorage.PartitionTicket storage ticket = partitionTickets[msg.sender];
+        ComponentStorage.PartitionTicket storage totalSuppliesTicket = partitionTickets[address(this)];
+        ComponentStorage.PartitionTicket storage ticket = partitionTickets[msg.sender];
 
         if (!ticket.initialized) {
 
@@ -85,13 +85,13 @@ library PartitionedLiquidity {
 
         for (uint i = 0; i < _length; i++) {
 
-            ShellStorage.Assimilator memory _assim = shell.assimilators[_derivatives[i]];
+            ComponentStorage.Assimilator memory _assim = component.assimilators[_derivatives[i]];
 
-            require(totalSuppliesTicket.claims[_assim.ix] >= _withdrawals[i], "Shell/burn-exceeds-total-supply");
+            require(totalSuppliesTicket.claims[_assim.ix] >= _withdrawals[i], "Component/burn-exceeds-total-supply");
             
-            require(ticket.claims[_assim.ix] >= _withdrawals[i], "Shell/insufficient-balance");
+            require(ticket.claims[_assim.ix] >= _withdrawals[i], "Component/insufficient-balance");
 
-            require(_assim.addr != address(0), "Shell/unsupported-asset");
+            require(_assim.addr != address(0), "Component/unsupported-asset");
 
             int128 _reserveBalance = Assimilators.viewNumeraireBalance(_assim.addr);
 

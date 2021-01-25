@@ -15,9 +15,9 @@ contract DebugTest is Setup, DSMath, DSTest {
     using ABDKMath64x64 for uint;
     using ABDKMath64x64 for int128;
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
-    Shell s;
+    Component s;
 
     event log_bytes(bytes32, bytes4);
     event log_uints(bytes32, uint256[]);

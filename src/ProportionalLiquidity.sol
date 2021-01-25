@@ -2,11 +2,11 @@ pragma solidity ^0.5.0;
 
 import "./Assimilators.sol";
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
 import "./UnsafeMath64x64.sol";
 
-import "./ShellMath.sol";
+import "./ComponentMath.sol";
 
 
 library ProportionalLiquidity {
@@ -21,26 +21,26 @@ library ProportionalLiquidity {
     int128 constant ONE_WEI = 0x12;
 
     function proportionalDeposit (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         uint256 _deposit
     ) external returns (
-        uint256 shells_,
+        uint256 components_,
         uint[] memory
     ) {
 
         int128 __deposit = _deposit.divu(1e18);
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
 
         uint[] memory deposits_ = new uint[](_length);
         
-        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(shell);
+        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(component);
 
         if (_oGLiq == 0) {
 
             for (uint i = 0; i < _length; i++) {
 
-                deposits_[i] = Assimilators.intakeNumeraire(shell.assets[i].addr, __deposit.mul(shell.weights[i]));
+                deposits_[i] = Assimilators.intakeNumeraire(component.assets[i].addr, __deposit.mul(component.weights[i]));
 
             }
 
@@ -50,46 +50,46 @@ library ProportionalLiquidity {
 
             for (uint i = 0; i < _length; i++) {
 
-                deposits_[i] = Assimilators.intakeNumeraire(shell.assets[i].addr, _oBals[i].mul(_multiplier));
+                deposits_[i] = Assimilators.intakeNumeraire(component.assets[i].addr, _oBals[i].mul(_multiplier));
 
             }
 
         }
         
-        int128 _totalShells = shell.totalSupply.divu(1e18);
+        int128 _totalComponents = component.totalSupply.divu(1e18);
         
-        int128 _newShells = _totalShells > 0
-            ? __deposit.div(_oGLiq).mul(_totalShells)
+        int128 _newComponents = _totalComponents > 0
+            ? __deposit.div(_oGLiq).mul(_totalComponents)
             : __deposit;
 
         requireLiquidityInvariant(
-            shell, 
-            _totalShells,
-            _newShells, 
+            component,
+            _totalComponents,
+            _newComponents,
             _oGLiq, 
             _oBals
         );        
 
-        mint(shell, msg.sender, shells_ = _newShells.mulu(1e18));
+        mint(component, msg.sender, components_ = _newComponents.mulu(1e18));
 
-        return (shells_, deposits_);
+        return (components_, deposits_);
 
     }
     
     
     function viewProportionalDeposit (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         uint256 _deposit
     ) external view returns (
-        uint shells_,
+        uint components_,
         uint[] memory
     ) {
 
         int128 __deposit = _deposit.divu(1e18);
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
 
-        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(shell);
+        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(component);
 
         uint[] memory deposits_ = new uint[](_length);
 
@@ -98,8 +98,8 @@ library ProportionalLiquidity {
             for (uint i = 0; i < _length; i++) {
 
                 deposits_[i] = Assimilators.viewRawAmount(
-                    shell.assets[i].addr,
-                    __deposit.mul(shell.weights[i])
+                    component.assets[i].addr,
+                    __deposit.mul(component.weights[i])
                 );
 
             }
@@ -111,7 +111,7 @@ library ProportionalLiquidity {
             for (uint i = 0; i < _length; i++) {
 
                 deposits_[i] = Assimilators.viewRawAmount(
-                    shell.assets[i].addr,
+                    component.assets[i].addr,
                     _oBals[i].mul(_multiplier)
                 );
 
@@ -119,42 +119,42 @@ library ProportionalLiquidity {
 
         }
         
-        int128 _totalShells = shell.totalSupply.divu(1e18);
+        int128 _totalComponents = component.totalSupply.divu(1e18);
         
-        int128 _newShells = _totalShells > 0
-            ? __deposit.div(_oGLiq).mul(_totalShells)
+        int128 _newComponents = _totalComponents > 0
+            ? __deposit.div(_oGLiq).mul(_totalComponents)
             : __deposit;
         
-        shells_ = _newShells.mulu(1e18);
+        components_ = _newComponents.mulu(1e18);
 
-        return ( shells_, deposits_ );
+        return (components_, deposits_ );
 
     }
 
     function proportionalWithdraw (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         uint256 _withdrawal
     ) external returns (
         uint[] memory
     ) {
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
 
-        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(shell);
+        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(component);
 
         uint[] memory withdrawals_ = new uint[](_length);
         
-        int128 _totalShells = shell.totalSupply.divu(1e18);
+        int128 _totalComponents = component.totalSupply.divu(1e18);
         int128 __withdrawal = _withdrawal.divu(1e18);
 
         int128 _multiplier = __withdrawal
-            .mul(ONE - shell.epsilon)
-            .div(_totalShells);
+            .mul(ONE - component.epsilon)
+            .div(_totalComponents);
 
         for (uint i = 0; i < _length; i++) {
 
             withdrawals_[i] = Assimilators.outputNumeraire(
-                shell.assets[i].addr,
+                component.assets[i].addr,
                 msg.sender,
                 _oBals[i].mul(_multiplier)
             );
@@ -162,39 +162,39 @@ library ProportionalLiquidity {
         }
 
         requireLiquidityInvariant(
-            shell, 
-            _totalShells, 
+            component,
+            _totalComponents,
             __withdrawal.neg(), 
             _oGLiq, 
             _oBals
         );
         
-        burn(shell, msg.sender, _withdrawal);
+        burn(component, msg.sender, _withdrawal);
 
         return withdrawals_;
 
     }
     
     function viewProportionalWithdraw (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         uint256 _withdrawal
     ) external view returns (
         uint[] memory
     ) {
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
 
-        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(shell);
+        ( int128 _oGLiq, int128[] memory _oBals ) = getGrossLiquidityAndBalances(component);
 
         uint[] memory withdrawals_ = new uint[](_length);
 
         int128 _multiplier = _withdrawal.divu(1e18)
-            .mul(ONE - shell.epsilon)
-            .div(shell.totalSupply.divu(1e18));
+            .mul(ONE - component.epsilon)
+            .div(component.totalSupply.divu(1e18));
 
         for (uint i = 0; i < _length; i++) {
 
-            withdrawals_[i] = Assimilators.viewRawAmount(shell.assets[i].addr, _oBals[i].mul(_multiplier));
+            withdrawals_[i] = Assimilators.viewRawAmount(component.assets[i].addr, _oBals[i].mul(_multiplier));
 
         }
 
@@ -203,19 +203,19 @@ library ProportionalLiquidity {
     }
 
     function getGrossLiquidityAndBalances (
-        ShellStorage.Shell storage shell
+        ComponentStorage.Component storage component
     ) internal view returns (
         int128 grossLiquidity_,
         int128[] memory
     ) {
         
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
 
         int128[] memory balances_ = new int128[](_length);
         
         for (uint i = 0; i < _length; i++) {
 
-            int128 _bal = Assimilators.viewNumeraireBalance(shell.assets[i].addr);
+            int128 _bal = Assimilators.viewNumeraireBalance(component.assets[i].addr);
             
             balances_[i] = _bal;
             grossLiquidity_ += _bal;
@@ -227,42 +227,42 @@ library ProportionalLiquidity {
     }
     
     function requireLiquidityInvariant (
-        ShellStorage.Shell storage shell,
-        int128 _shells,
-        int128 _newShells,
+        ComponentStorage.Component storage component,
+        int128 _components,
+        int128 _newComponents,
         int128 _oGLiq,
         int128[] memory _oBals
     ) private {
     
-        ( int128 _nGLiq, int128[] memory _nBals ) = getGrossLiquidityAndBalances(shell);
+        ( int128 _nGLiq, int128[] memory _nBals ) = getGrossLiquidityAndBalances(component);
         
-        int128 _beta = shell.beta;
-        int128 _delta = shell.delta;
-        int128[] memory _weights = shell.weights;
+        int128 _beta = component.beta;
+        int128 _delta = component.delta;
+        int128[] memory _weights = component.weights;
         
-        int128 _omega = ShellMath.calculateFee(_oGLiq, _oBals, _beta, _delta, _weights);
+        int128 _omega = ComponentMath.calculateFee(_oGLiq, _oBals, _beta, _delta, _weights);
 
-        int128 _psi = ShellMath.calculateFee(_nGLiq, _nBals, _beta, _delta, _weights);
+        int128 _psi = ComponentMath.calculateFee(_nGLiq, _nBals, _beta, _delta, _weights);
 
-        ShellMath.enforceLiquidityInvariant(_shells, _newShells, _oGLiq, _nGLiq, _omega, _psi);
+        ComponentMath.enforceLiquidityInvariant(_components, _newComponents, _oGLiq, _nGLiq, _omega, _psi);
         
     }
 
-    function burn (ShellStorage.Shell storage shell, address account, uint256 amount) private {
+    function burn (ComponentStorage.Component storage component, address account, uint256 amount) private {
 
-        shell.balances[account] = burn_sub(shell.balances[account], amount);
+        component.balances[account] = burn_sub(component.balances[account], amount);
 
-        shell.totalSupply = burn_sub(shell.totalSupply, amount);
+        component.totalSupply = burn_sub(component.totalSupply, amount);
 
         emit Transfer(msg.sender, address(0), amount);
 
     }
 
-    function mint (ShellStorage.Shell storage shell, address account, uint256 amount) private {
+    function mint (ComponentStorage.Component storage component, address account, uint256 amount) private {
 
-        shell.totalSupply = mint_add(shell.totalSupply, amount);
+        component.totalSupply = mint_add(component.totalSupply, amount);
 
-        shell.balances[account] = mint_add(shell.balances[account], amount);
+        component.balances[account] = mint_add(component.balances[account], amount);
 
         emit Transfer(address(0), msg.sender, amount);
 
@@ -270,13 +270,13 @@ library ProportionalLiquidity {
 
     function mint_add(uint x, uint y) private pure returns (uint z) {
 
-        require((z = x + y) >= x, "Shell/mint-overflow");
+        require((z = x + y) >= x, "Component/mint-overflow");
 
     }
 
     function burn_sub(uint x, uint y) private pure returns (uint z) {
 
-        require((z = x - y) <= x, "Shell/burn-underflow");
+        require((z = x - y) <= x, "Component/burn-underflow");
 
     }
 

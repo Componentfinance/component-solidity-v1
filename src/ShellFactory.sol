@@ -15,11 +15,11 @@ pragma solidity ^0.5.0;
 
 // Finds new Shells! logs their addresses and provides `isShell(address) -> (bool)`
 
-import "./Shell.sol";
+import "./Component.sol";
 
-import "./interfaces/IFreeFromUpTo.sol";
+import "./CHIDiscounter.sol";
 
-contract ShellFactory {
+contract ShellFactory is CHIDiscounter {
 
     address private cowri;
 
@@ -28,15 +28,6 @@ contract ShellFactory {
     event CowriSet(address indexed caller, address indexed cowri);
 
     mapping(address => bool) private _isShell;
-
-    IFreeFromUpTo public constant chi = IFreeFromUpTo(0x0000000000004946c0e9F43F4Dee607b0eF1fA1c);
-
-    modifier discountCHI {
-        uint256 gasStart = gasleft();
-        _;
-        uint256 gasSpent = 21000 + gasStart - gasleft() + 16 * msg.data.length;
-        chi.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41130);
-    }
 
     function isShell(address _shell) external view returns (bool) {
 
@@ -48,14 +39,15 @@ contract ShellFactory {
         address[] memory _assets,
         uint[] memory _assetWeights,
         address[] memory _derivativeAssimilators
-    ) public discountCHI returns (Shell) {
+    ) public discountCHI returns (Component) {
         
         if (msg.sender != cowri) revert("Shell/must-be-cowri");
 
-        Shell shell = new Shell(
+        Component shell = new Shell(
             _assets,
             _assetWeights,
-            _derivativeAssimilators
+            _derivativeAssimilators,
+            chi
         );
 
         shell.transferOwnership(msg.sender);
@@ -69,7 +61,7 @@ contract ShellFactory {
     }
 
 
-    constructor() public {
+    constructor(IFreeFromUpTo _chi) public CHIDiscounter(_chi) {
 
         cowri = msg.sender;
 

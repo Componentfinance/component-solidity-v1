@@ -13,7 +13,7 @@
 
 pragma solidity ^0.5.0;
 
-import "../../../ShellStorage.sol";
+import "../../../ComponentStorage.sol";
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 

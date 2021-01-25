@@ -23,17 +23,17 @@ import "./ProportionalLiquidity.sol";
 
 import "./SelectiveLiquidity.sol";
 
-import "./Shells.sol";
+import "./Components.sol";
 
 import "./Swaps.sol";
 
 import "./ViewLiquidity.sol";
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
-import "./interfaces/IFreeFromUpTo.sol";
+import "./CHIDiscounter.sol";
 
-contract Shell is ShellStorage {
+contract Component is CHIDiscounter, ComponentStorage {
 
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
@@ -55,25 +55,16 @@ contract Shell is ShellStorage {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    IFreeFromUpTo public constant chi = IFreeFromUpTo(0x0000000000004946c0e9F43F4Dee607b0eF1fA1c);
-
-    modifier discountCHI {
-        uint256 gasStart = gasleft();
-        _;
-        uint256 gasSpent = 21000 + gasStart - gasleft() + 16 * msg.data.length;
-        chi.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41130);
-    }
-
     modifier onlyOwner() {
 
-        require(msg.sender == owner, "Shell/caller-is-not-owner");
+        require(msg.sender == owner, "Component/caller-is-not-owner");
         _;
 
     }
 
     modifier nonReentrant() {
 
-        require(notEntered, "Shell/re-entered");
+        require(notEntered, "Component/re-entered");
         notEntered = false;
         _;
         notEntered = true;
@@ -82,28 +73,28 @@ contract Shell is ShellStorage {
 
     modifier transactable () {
 
-        require(!frozen, "Shell/frozen-only-allowing-proportional-withdraw");
+        require(!frozen, "Component/frozen-only-allowing-proportional-withdraw");
         _;
 
     }
 
     modifier unpartitioned () {
 
-        require(!partitioned, "Shell/pool-partitioned");
+        require(!partitioned, "Component/pool-partitioned");
         _;
 
     }
 
     modifier isPartitioned () {
 
-        require(partitioned, "Shell/pool-not-partitioned");
+        require(partitioned, "Component/pool-not-partitioned");
         _;
 
     }
 
     modifier deadline (uint _deadline) {
 
-        require(block.timestamp < _deadline, "Shell/tx-deadline-passed");
+        require(block.timestamp < _deadline, "Component/tx-deadline-passed");
         _;
 
     }
@@ -111,14 +102,15 @@ contract Shell is ShellStorage {
     constructor (
         address[] memory _assets,
         uint[] memory _assetWeights,
-        address[] memory _derivativeAssimilators
-    ) public {
+        address[] memory _derivativeAssimilators,
+        IFreeFromUpTo _chi
+    ) public CHIDiscounter(_chi) {
         
         owner = msg.sender;
         emit OwnershipTransfered(address(0), msg.sender);
         
         Orchestrator.initialize(
-            shell,
+            component,
             numeraires,
             reserves,
             derivatives,
@@ -143,11 +135,11 @@ contract Shell is ShellStorage {
         uint _lambda
     ) external onlyOwner {
 
-        Orchestrator.setParams(shell, _alpha, _beta, _feeAtHalt, _epsilon, _lambda);
+        Orchestrator.setParams(component, _alpha, _beta, _feeAtHalt, _epsilon, _lambda);
 
     }
 
-    /// @notice excludes an assimilator from the shell
+    /// @notice excludes an assimilator from the component
     /// @param _derivative the address of the assimilator to exclude
     function excludeDerivative (
         address _derivative
@@ -157,23 +149,23 @@ contract Shell is ShellStorage {
 
         for (uint i = 0; i < numeraires.length; i++) {
             
-            if (_derivative == numeraires[i]) revert("Shell/cannot-delete-numeraire");
-            if (_derivative == reserves[i]) revert("Shell/cannot-delete-reserve");
+            if (_derivative == numeraires[i]) revert("Component/cannot-delete-numeraire");
+            if (_derivative == reserves[i]) revert("Component/cannot-delete-reserve");
             
         }
 
-        delete shell.assimilators[_derivative];
+        delete component.assimilators[_derivative];
 
     }
 
-    /// @notice view the current parameters of the shell
+    /// @notice view the current parameters of the component
     /// @return alpha_ the current alpha value
     /// @return beta_ the current beta value
     /// @return delta_ the current delta value
     /// @return epsilon_ the current epsilon value
     /// @return lambda_ the current lambda value
     /// @return omega_ the current omega value
-    function viewShell () external view returns (
+    function viewComponent() external view returns (
         uint alpha_,
         uint beta_,
         uint delta_,
@@ -181,7 +173,7 @@ contract Shell is ShellStorage {
         uint lambda_
     ) {
 
-        return Orchestrator.viewShell(shell);
+        return Orchestrator.viewComponent(component);
 
     }
 
@@ -219,9 +211,9 @@ contract Shell is ShellStorage {
         uint targetAmount_
     ) {
 
-        targetAmount_ = Swaps.originSwap(shell, _origin, _target, _originAmount, msg.sender);
+        targetAmount_ = Swaps.originSwap(component, _origin, _target, _originAmount, msg.sender);
 
-        require(targetAmount_ > _minTargetAmount, "Shell/below-min-target-amount");
+        require(targetAmount_ > _minTargetAmount, "Component/below-min-target-amount");
 
     }
 
@@ -235,9 +227,9 @@ contract Shell is ShellStorage {
         uint targetAmount_
     ) {
 
-        targetAmount_ = Swaps.originSwap(shell, _origin, _target, _originAmount, msg.sender);
+        targetAmount_ = Swaps.originSwap(component, _origin, _target, _originAmount, msg.sender);
 
-        require(targetAmount_ > _minTargetAmount, "Shell/below-min-target-amount");
+        require(targetAmount_ > _minTargetAmount, "Component/below-min-target-amount");
 
     }
 
@@ -255,7 +247,7 @@ contract Shell is ShellStorage {
         uint targetAmount_
     ) {
 
-        targetAmount_ = Swaps.viewOriginSwap(shell, _origin, _target, _originAmount);
+        targetAmount_ = Swaps.viewOriginSwap(component, _origin, _target, _originAmount);
 
     }
 
@@ -277,9 +269,9 @@ contract Shell is ShellStorage {
         uint originAmount_
     ) {
 
-        originAmount_ = Swaps.targetSwap(shell, _origin, _target, _targetAmount, msg.sender);
+        originAmount_ = Swaps.targetSwap(component, _origin, _target, _targetAmount, msg.sender);
 
-        require(originAmount_ < _maxOriginAmount, "Shell/above-max-origin-amount");
+        require(originAmount_ < _maxOriginAmount, "Component/above-max-origin-amount");
 
     }
 
@@ -297,32 +289,32 @@ contract Shell is ShellStorage {
         uint originAmount_
     ) {
 
-        originAmount_ = Swaps.viewTargetSwap(shell, _origin, _target, _targetAmount);
+        originAmount_ = Swaps.viewTargetSwap(component, _origin, _target, _targetAmount);
 
     }
 
     /// @author james foley http://github.com/realisation
-    /// @notice selectively deposit any supported stablecoin flavor into the contract in return for corresponding amount of shell tokens
+    /// @notice selectively deposit any supported stablecoin flavor into the contract in return for corresponding amount of component tokens
     /// @param _derivatives an array containing the addresses of the flavors being deposited into
     /// @param _amounts an array containing the values of the flavors you wish to deposit into the contract. each amount should have the same index as the flavor it is meant to deposit
-    /// @param _minShells minimum acceptable amount of shells
+    /// @param _minComponents minimum acceptable amount of shells
     /// @param _deadline deadline for tx
     /// @return shellsToMint_ the amount of shells to mint for the deposited stablecoin flavors
     function selectiveDeposit (
         address[] calldata _derivatives,
         uint[] calldata _amounts,
-        uint _minShells,
+        uint _minComponents,
         uint _deadline
     ) external deadline(_deadline) transactable nonReentrant returns (
         uint shellsMinted_
     ) {
 
-        shellsMinted_ = SelectiveLiquidity.selectiveDeposit(shell, _derivatives, _amounts, _minShells);
+        shellsMinted_ = SelectiveLiquidity.selectiveDeposit(component, _derivatives, _amounts, _minComponents);
 
     }
 
     /// @author james folew http://github.com/realisation
-    /// @notice view how many shell tokens a deposit will mint
+    /// @notice view how many component tokens a deposit will mint
     /// @param _derivatives an array containing the addresses of the flavors being deposited into
     /// @param _amounts an array containing the values of the flavors you wish to deposit into the contract. each amount should have the same index as the flavor it is meant to deposit
     /// @return shellsToMint_ the amount of shells to mint for the deposited stablecoin flavors
@@ -333,7 +325,7 @@ contract Shell is ShellStorage {
         uint shellsToMint_
     ) {
 
-        shellsToMint_ = SelectiveLiquidity.viewSelectiveDeposit(shell, _derivatives, _amounts);
+        shellsToMint_ = SelectiveLiquidity.viewSelectiveDeposit(component, _derivatives, _amounts);
 
     }
 
@@ -350,7 +342,7 @@ contract Shell is ShellStorage {
         uint[] memory deposits_
     ) {
 
-        return ProportionalLiquidity.proportionalDeposit(shell, _deposit);
+        return ProportionalLiquidity.proportionalDeposit(component, _deposit);
 
     }
 
@@ -366,35 +358,35 @@ contract Shell is ShellStorage {
         uint[] memory depositsToMake_
     ) {
 
-        return ProportionalLiquidity.viewProportionalDeposit(shell, _deposit);
+        return ProportionalLiquidity.viewProportionalDeposit(component, _deposit);
 
     }
 
     /// @author james foley http://github.com/realisation
-    /// @notice selectively withdrawal any supported stablecoin flavor from the contract by burning a corresponding amount of shell tokens
+    /// @notice selectively withdrawal any supported stablecoin flavor from the contract by burning a corresponding amount of component tokens
     /// @param _derivatives an array of flavors to withdraw from the reserves
     /// @param _amounts an array of amounts to withdraw that maps to _flavors
-    /// @param _maxShells the maximum amount of shells you want to burn
+    /// @param _maxComponents the maximum amount of shells you want to burn
     /// @param _deadline timestamp after which the transaction is no longer valid
-    /// @return shellsBurned_ the corresponding amount of shell tokens to withdraw the specified amount of specified flavors
+    /// @return shellsBurned_ the corresponding amount of component tokens to withdraw the specified amount of specified flavors
     function selectiveWithdraw (
         address[] calldata _derivatives,
         uint[] calldata _amounts,
-        uint _maxShells,
+        uint _maxComponents,
         uint _deadline
     ) external deadline(_deadline) transactable nonReentrant returns (
         uint shellsBurned_
     ) {
 
-        shellsBurned_ = SelectiveLiquidity.selectiveWithdraw(shell, _derivatives, _amounts, _maxShells);
+        shellsBurned_ = SelectiveLiquidity.selectiveWithdraw(component, _derivatives, _amounts, _maxComponents);
 
     }
 
     /// @author james foley http://github.com/realisation
-    /// @notice view how many shell tokens a withdraw will consume
+    /// @notice view how many component tokens a withdraw will consume
     /// @param _derivatives an array of flavors to withdraw from the reserves
     /// @param _amounts an array of amounts to withdraw that maps to _flavors
-    /// @return shellsBurned_ the corresponding amount of shell tokens to withdraw the specified amount of specified flavors
+    /// @return shellsBurned_ the corresponding amount of component tokens to withdraw the specified amount of specified flavors
     function viewSelectiveWithdraw (
         address[] calldata _derivatives,
         uint[] calldata _amounts
@@ -402,12 +394,12 @@ contract Shell is ShellStorage {
         uint shellsToBurn_
     ) {
 
-        shellsToBurn_ = SelectiveLiquidity.viewSelectiveWithdraw(shell, _derivatives, _amounts);
+        shellsToBurn_ = SelectiveLiquidity.viewSelectiveWithdraw(component, _derivatives, _amounts);
 
     }
 
     /// @author  james foley http://github.com/realisation
-    /// @notice  withdrawas amount of shell tokens from the the pool equally from the numeraire assets of the pool with no slippage
+    /// @notice  withdrawas amount of component tokens from the the pool equally from the numeraire assets of the pool with no slippage
     /// @param   _shellsToBurn the full amount you want to withdraw from the pool which will be withdrawn from evenly amongst the numeraire assets of the pool
     /// @return withdrawals_ the amonts of numeraire assets withdrawn from the pool
     function proportionalWithdraw (
@@ -417,7 +409,7 @@ contract Shell is ShellStorage {
         uint[] memory withdrawals_
     ) {
 
-        return ProportionalLiquidity.proportionalWithdraw(shell, _shellsToBurn);
+        return ProportionalLiquidity.proportionalWithdraw(component, _shellsToBurn);
 
     }
 
@@ -434,7 +426,7 @@ contract Shell is ShellStorage {
     }
 
     /// @author  james foley http://github.com/realisation
-    /// @notice  withdrawals amount of shell tokens from the the pool equally from the numeraire assets of the pool with no slippage
+    /// @notice  withdrawals amount of component tokens from the the pool equally from the numeraire assets of the pool with no slippage
     /// @param   _shellsToBurn the full amount you want to withdraw from the pool which will be withdrawn from evenly amongst the numeraire assets of the pool
     /// @return withdrawalsToHappen_ the amonts of numeraire assets withdrawn from the pool
     function viewProportionalWithdraw (
@@ -443,22 +435,22 @@ contract Shell is ShellStorage {
         uint[] memory withdrawalsToHappen_
     ) {
 
-        return ProportionalLiquidity.viewProportionalWithdraw(shell, _shellsToBurn);
+        return ProportionalLiquidity.viewProportionalWithdraw(component, _shellsToBurn);
 
     }
 
     function partition () external onlyOwner {
 
-        require(frozen, "Shell/must-be-frozen");
+        require(frozen, "Component/must-be-frozen");
 
-        PartitionedLiquidity.partition(shell, partitionTickets);
+        PartitionedLiquidity.partition(component, partitionTickets);
 
         partitioned = true;
 
     }
     
     /// @author  james foley http://github.com/realisation
-    /// @notice  withdraws amount of shell tokens from the the pool equally from the numeraire assets of the pool with no slippage
+    /// @notice  withdraws amount of component tokens from the the pool equally from the numeraire assets of the pool with no slippage
     /// @param _tokens an array of the numeraire assets you will withdraw
     /// @param _amounts an array of the amounts in terms of partitioned shels you want to withdraw from that numeraire partition
     /// @return withdrawals_ the amounts of the numeraire assets withdrawn
@@ -469,7 +461,7 @@ contract Shell is ShellStorage {
         uint256[] memory withdrawals_
     ) {
 
-        return PartitionedLiquidity.partitionedWithdraw(shell, partitionTickets, _tokens, _amounts);
+        return PartitionedLiquidity.partitionedWithdraw(component, partitionTickets, _tokens, _amounts);
 
     }
 
@@ -483,13 +475,13 @@ contract Shell is ShellStorage {
         uint[] memory claims_
     ) {
 
-        return PartitionedLiquidity.viewPartitionClaims(shell, partitionTickets, _addr);
+        return PartitionedLiquidity.viewPartitionClaims(component, partitionTickets, _addr);
 
     }
 
-    /// @notice transfers shell tokens
-    /// @param _recipient the address of where to send the shell tokens
-    /// @param _amount the amount of shell tokens to send
+    /// @notice transfers component tokens
+    /// @param _recipient the address of where to send the component tokens
+    /// @param _amount the amount of component tokens to send
     /// @return success_ the success bool of the call
     function transfer (
         address _recipient,
@@ -498,16 +490,16 @@ contract Shell is ShellStorage {
         bool success_
     ) {
 
-        require(!partitionTickets[msg.sender].initialized, "Shell/no-transfers-once-partitioned");
+        require(!partitionTickets[msg.sender].initialized, "Component/no-transfers-once-partitioned");
 
-        success_ = Shells.transfer(shell, _recipient, _amount);
+        success_ = Components.transfer(component, _recipient, _amount);
 
     }
 
-    /// @notice transfers shell tokens from one address to another address
-    /// @param _sender the account from which the shell tokens will be sent
-    /// @param _recipient the account to which the shell tokens will be sent
-    /// @param _amount the amount of shell tokens to transfer
+    /// @notice transfers component tokens from one address to another address
+    /// @param _sender the account from which the component tokens will be sent
+    /// @param _recipient the account to which the component tokens will be sent
+    /// @param _amount the amount of component tokens to transfer
     /// @return success_ the success bool of the call
     function transferFrom (
         address _sender,
@@ -517,40 +509,40 @@ contract Shell is ShellStorage {
         bool success_
     ) {
 
-        require(!partitionTickets[_sender].initialized, "Shell/no-transfers-once-partitioned");
+        require(!partitionTickets[_sender].initialized, "Component/no-transfers-once-partitioned");
 
-        success_ = Shells.transferFrom(shell, _sender, _recipient, _amount);
+        success_ = Components.transferFrom(component, _sender, _recipient, _amount);
 
     }
 
-    /// @notice approves a user to spend shell tokens on their behalf
+    /// @notice approves a user to spend component tokens on their behalf
     /// @param _spender the account to allow to spend from msg.sender
     /// @param _amount the amount to specify the spender can spend
     /// @return success_ the success bool of this call
     function approve (address _spender, uint _amount) public nonReentrant returns (bool success_) {
 
-        success_ = Shells.approve(shell, _spender, _amount);
+        success_ = Components.approve(component, _spender, _amount);
 
     }
 
-    /// @notice view the shell token balance of a given account
+    /// @notice view the component token balance of a given account
     /// @param _account the account to view the balance of  
-    /// @return balance_ the shell token ballance of the given account
+    /// @return balance_ the component token ballance of the given account
     function balanceOf (
         address _account
     ) public view returns (
         uint balance_
     ) {
 
-        balance_ = shell.balances[_account];
+        balance_ = component.balances[_account];
 
     }
 
-    /// @notice views the total shell supply of the pool
-    /// @return totalSupply_ the total supply of shell tokens
+    /// @notice views the total component supply of the pool
+    /// @return totalSupply_ the total supply of component tokens
     function totalSupply () public view returns (uint totalSupply_) {
 
-        totalSupply_ = shell.totalSupply;
+        totalSupply_ = component.totalSupply;
 
     }
 
@@ -565,19 +557,19 @@ contract Shell is ShellStorage {
         uint allowance_
     ) {
 
-        allowance_ = shell.allowances[_owner][_spender];
+        allowance_ = component.allowances[_owner][_spender];
 
     }
 
-    /// @notice views the total amount of liquidity in the shell in numeraire value and format - 18 decimals
-    /// @return total_ the total value in the shell
-    /// @return individual_ the individual values in the shell
+    /// @notice views the total amount of liquidity in the component in numeraire value and format - 18 decimals
+    /// @return total_ the total value in the component
+    /// @return individual_ the individual values in the component
     function liquidity () public view returns (
         uint total_,
         uint[] memory individual_
     ) {
 
-        return ViewLiquidity.viewLiquidity(shell);
+        return ViewLiquidity.viewLiquidity(component);
 
     }
     
@@ -589,7 +581,7 @@ contract Shell is ShellStorage {
         address assimilator_
     ) {
 
-        assimilator_ = shell.assimilators[_derivative].addr;
+        assimilator_ = component.assimilators[_derivative].addr;
 
     }
 

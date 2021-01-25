@@ -14,9 +14,9 @@ contract PartitionedLiquidityTemplate is Setup {
     using ABDKMath64x64 for uint;
     using ABDKMath64x64 for int128;
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
-    Shell s;
+    Component s;
 
     function from_proprotional_state_underflow () public returns (bool success_) {
 

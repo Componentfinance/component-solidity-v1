@@ -14,10 +14,10 @@ contract TargetSwapViewsTemplate is Setup {
     using ABDKMath64x64 for uint;
     using ABDKMath64x64 for int128;
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
-    Shell s;
-    Shell s2;
+    Component s;
+    Component s2;
 
     function noSlippage_balanced_DAI_to_10USDC_300Proportional () public returns (uint256 originAmount_) {
 

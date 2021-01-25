@@ -2,9 +2,9 @@ pragma solidity ^0.5.0;
 
 import "./Assimilators.sol";
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
-import "./ShellMath.sol";
+import "./ComponentMath.sol";
 
 import "./UnsafeMath64x64.sol";
 
@@ -21,97 +21,97 @@ library SelectiveLiquidity {
     int128 constant ONE = 0x10000000000000000;
 
     function selectiveDeposit (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] calldata _derivatives,
         uint[] calldata _amounts,
-        uint _minShells
+        uint _minComponents
     ) external returns (
-        uint shells_
+        uint components_
     ) {
 
         (   int128 _oGLiq,
             int128 _nGLiq,
             int128[] memory _oBals,
-            int128[] memory _nBals ) = getLiquidityDepositData(shell, _derivatives, _amounts);
+            int128[] memory _nBals ) = getLiquidityDepositData(component, _derivatives, _amounts);
 
-        int128 _shells = ShellMath.calculateLiquidityMembrane(shell, _oGLiq, _nGLiq, _oBals, _nBals);
+        int128 _components = ComponentMath.calculateLiquidityMembrane(component, _oGLiq, _nGLiq, _oBals, _nBals);
 
-        shells_ = _shells.mulu(1e18);
+        components_ = _components.mulu(1e18);
 
-        require(_minShells < shells_, "Shell/under-minimum-shells");
+        require(_minComponents < components_, "Component/under-minimum-components");
 
-        mint(shell, msg.sender, shells_);
+        mint(component, msg.sender, components_);
 
     }
 
     function viewSelectiveDeposit (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] calldata _derivatives,
         uint[] calldata _amounts
     ) external view returns (
-        uint shells_
+        uint components_
     ) {
 
         (   int128 _oGLiq,
             int128 _nGLiq,
             int128[] memory _oBals,
-            int128[] memory _nBals ) = viewLiquidityDepositData(shell, _derivatives, _amounts);
+            int128[] memory _nBals ) = viewLiquidityDepositData(component, _derivatives, _amounts);
 
-        int128 _shells = ShellMath.calculateLiquidityMembrane(shell, _oGLiq, _nGLiq, _oBals, _nBals);
+        int128 _components = ComponentMath.calculateLiquidityMembrane(component, _oGLiq, _nGLiq, _oBals, _nBals);
 
-        shells_ = _shells.mulu(1e18);
+        components_ = _components.mulu(1e18);
 
     }
 
     function selectiveWithdraw (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] calldata _derivatives,
         uint[] calldata _amounts,
-        uint _maxShells
+        uint _maxComponents
     ) external returns (
-        uint256 shells_
+        uint256 components_
     ) {
 
         (   int128 _oGLiq,
             int128 _nGLiq,
             int128[] memory _oBals,
-            int128[] memory _nBals ) = getLiquidityWithdrawData(shell, _derivatives, msg.sender, _amounts);
+            int128[] memory _nBals ) = getLiquidityWithdrawData(component, _derivatives, msg.sender, _amounts);
 
-        int128 _shells = ShellMath.calculateLiquidityMembrane(shell, _oGLiq, _nGLiq, _oBals, _nBals);
+        int128 _components = ComponentMath.calculateLiquidityMembrane(component, _oGLiq, _nGLiq, _oBals, _nBals);
 
-        _shells = _shells.neg().us_mul(ONE + shell.epsilon);
+        _components = _components.neg().us_mul(ONE + component.epsilon);
 
-        shells_ = _shells.mulu(1e18);
+        components_ = _components.mulu(1e18);
 
-        require(shells_ < _maxShells, "Shell/above-maximum-shells");
+        require(components_ < _maxComponents, "Component/above-maximum-components");
 
-        burn(shell, msg.sender, shells_);
+        burn(component, msg.sender, components_);
 
     }
 
     function viewSelectiveWithdraw (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] calldata _derivatives,
         uint[] calldata _amounts
     ) external view returns (
-        uint shells_
+        uint components_
     ) {
 
         (   int128 _oGLiq,
             int128 _nGLiq,
             int128[] memory _oBals,
-            int128[] memory _nBals ) = viewLiquidityWithdrawData(shell, _derivatives, _amounts);
+            int128[] memory _nBals ) = viewLiquidityWithdrawData(component, _derivatives, _amounts);
 
-        int128 _shells = ShellMath.calculateLiquidityMembrane(shell, _oGLiq, _nGLiq, _oBals, _nBals);
+        int128 _components = ComponentMath.calculateLiquidityMembrane(component, _oGLiq, _nGLiq, _oBals, _nBals);
 
-        _shells = _shells.neg().us_mul(ONE + shell.epsilon);
+        _components = _components.neg().us_mul(ONE + component.epsilon);
 
-        shells_ = _shells.mulu(1e18);
+        components_ = _components.mulu(1e18);
 
     }
 
     function getLiquidityDepositData (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] memory _derivatives,
         uint[] memory _amounts
     ) private returns (
@@ -121,15 +121,15 @@ library SelectiveLiquidity {
         int128[] memory
     ) {
 
-        uint _length = shell.weights.length;
+        uint _length = component.weights.length;
         int128[] memory oBals_ = new int128[](_length);
         int128[] memory nBals_ = new int128[](_length);
 
         for (uint i = 0; i < _derivatives.length; i++) {
 
-            ShellStorage.Assimilator memory _assim = shell.assimilators[_derivatives[i]];
+            ComponentStorage.Assimilator memory _assim = component.assimilators[_derivatives[i]];
 
-            require(_assim.addr != address(0), "Shell/unsupported-derivative");
+            require(_assim.addr != address(0), "Component/unsupported-derivative");
 
             if ( nBals_[_assim.ix] == 0 && 0 == oBals_[_assim.ix]) {
 
@@ -149,12 +149,12 @@ library SelectiveLiquidity {
 
         }
 
-        return completeLiquidityData(shell, oBals_, nBals_);
+        return completeLiquidityData(component, oBals_, nBals_);
 
     }
 
     function getLiquidityWithdrawData (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] memory _derivatives,
         address _rcpnt,
         uint[] memory _amounts
@@ -165,15 +165,15 @@ library SelectiveLiquidity {
         int128[] memory
     ) {
 
-        uint _length = shell.weights.length;
+        uint _length = component.weights.length;
         int128[] memory oBals_ = new int128[](_length);
         int128[] memory nBals_ = new int128[](_length);
 
         for (uint i = 0; i < _derivatives.length; i++) {
 
-            ShellStorage.Assimilator memory _assim = shell.assimilators[_derivatives[i]];
+            ComponentStorage.Assimilator memory _assim = component.assimilators[_derivatives[i]];
 
-            require(_assim.addr != address(0), "Shell/unsupported-derivative");
+            require(_assim.addr != address(0), "Component/unsupported-derivative");
 
             if ( nBals_[_assim.ix] == 0 && 0 == oBals_[_assim.ix]) {
 
@@ -192,12 +192,12 @@ library SelectiveLiquidity {
 
         }
 
-        return completeLiquidityData(shell, oBals_, nBals_);
+        return completeLiquidityData(component, oBals_, nBals_);
 
     }
 
     function viewLiquidityDepositData (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] memory _derivatives,
         uint[] memory _amounts
     ) private view returns (
@@ -207,15 +207,15 @@ library SelectiveLiquidity {
         int128[] memory
     ) {
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
         int128[] memory oBals_ = new int128[](_length);
         int128[] memory nBals_ = new int128[](_length);
 
         for (uint i = 0; i < _derivatives.length; i++) {
 
-            ShellStorage.Assimilator memory _assim = shell.assimilators[_derivatives[i]];
+            ComponentStorage.Assimilator memory _assim = component.assimilators[_derivatives[i]];
 
-            require(_assim.addr != address(0), "Shell/unsupported-derivative");
+            require(_assim.addr != address(0), "Component/unsupported-derivative");
 
             if ( nBals_[_assim.ix] == 0 && 0 == oBals_[_assim.ix]) {
 
@@ -235,12 +235,12 @@ library SelectiveLiquidity {
 
         }
 
-        return completeLiquidityData(shell, oBals_, nBals_);
+        return completeLiquidityData(component, oBals_, nBals_);
 
     }
 
     function viewLiquidityWithdrawData (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] memory _derivatives,
         uint[] memory _amounts
     ) private view returns (
@@ -250,15 +250,15 @@ library SelectiveLiquidity {
         int128[] memory
     ) {
 
-        uint _length = shell.assets.length;
+        uint _length = component.assets.length;
         int128[] memory oBals_ = new int128[](_length);
         int128[] memory nBals_ = new int128[](_length);
 
         for (uint i = 0; i < _derivatives.length; i++) {
 
-            ShellStorage.Assimilator memory _assim = shell.assimilators[_derivatives[i]];
+            ComponentStorage.Assimilator memory _assim = component.assimilators[_derivatives[i]];
 
-            require(_assim.addr != address(0), "Shell/unsupported-derivative");
+            require(_assim.addr != address(0), "Component/unsupported-derivative");
 
             if ( nBals_[_assim.ix] == 0 && 0 == oBals_[_assim.ix]) {
 
@@ -278,12 +278,12 @@ library SelectiveLiquidity {
 
         }
 
-        return completeLiquidityData(shell, oBals_, nBals_);
+        return completeLiquidityData(component, oBals_, nBals_);
 
     }
 
     function completeLiquidityData (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         int128[] memory oBals_,
         int128[] memory nBals_
     ) private view returns (
@@ -299,7 +299,7 @@ library SelectiveLiquidity {
 
             if (oBals_[i] == 0 && 0 == nBals_[i]) {
 
-                nBals_[i] = oBals_[i] = Assimilators.viewNumeraireBalance(shell.assets[i].addr);
+                nBals_[i] = oBals_[i] = Assimilators.viewNumeraireBalance(component.assets[i].addr);
                 
             }
 
@@ -312,32 +312,32 @@ library SelectiveLiquidity {
 
     }
 
-    function burn (ShellStorage.Shell storage shell, address account, uint256 amount) private {
+    function burn (ComponentStorage.Component storage component, address account, uint256 amount) private {
 
-        shell.balances[account] = burn_sub(shell.balances[account], amount);
+        component.balances[account] = burn_sub(component.balances[account], amount);
 
-        shell.totalSupply = burn_sub(shell.totalSupply, amount);
+        component.totalSupply = burn_sub(component.totalSupply, amount);
 
         emit Transfer(msg.sender, address(0), amount);
 
     }
 
-    function mint (ShellStorage.Shell storage shell, address account, uint256 amount) private {
+    function mint (ComponentStorage.Component storage component, address account, uint256 amount) private {
 
-        shell.totalSupply = mint_add(shell.totalSupply, amount);
+        component.totalSupply = mint_add(component.totalSupply, amount);
 
-        shell.balances[account] = mint_add(shell.balances[account], amount);
+        component.balances[account] = mint_add(component.balances[account], amount);
 
         emit Transfer(address(0), msg.sender, amount);
 
     }
 
     function mint_add(uint x, uint y) private pure returns (uint z) {
-        require((z = x + y) >= x, "Shell/mint-overflow");
+        require((z = x + y) >= x, "Component/mint-overflow");
     }
 
     function burn_sub(uint x, uint y) private pure returns (uint z) {
-        require((z = x - y) <= x, "Shell/burn-underflow");
+        require((z = x - y) <= x, "Component/burn-underflow");
     }
 
 }

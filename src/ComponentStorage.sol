@@ -23,23 +23,23 @@ import "./ProportionalLiquidity.sol";
 
 import "./SelectiveLiquidity.sol";
 
-import "./Shells.sol";
+import "./Components.sol";
 
 import "./Swaps.sol";
 
 import "./ViewLiquidity.sol";
 
-contract ShellStorage {
+contract ComponentStorage {
 
     address public owner;
 
-    string  public constant name = "Shells";
-    string  public constant symbol = "SHL";
+    string  public constant name = "Component LP Token";
+    string  public constant symbol = "CMP-LP";
     uint8   public constant decimals = 18;
 
-    Shell public shell;
+    Component public component;
 
-    struct Shell {
+    struct Component {
         int128 alpha;
         int128 beta;
         int128 delta;

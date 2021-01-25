@@ -18,9 +18,9 @@ import "../interfaces/IAssimilator.sol";
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
-import "../ShellStorage.sol";
+import "../ComponentStorage.sol";
 
-contract AssimilatorBouncer is ShellStorage {
+contract AssimilatorBouncer is ComponentStorage {
 
     using ABDKMath64x64 for uint256;
     using ABDKMath64x64 for int128;
@@ -30,7 +30,7 @@ contract AssimilatorBouncer is ShellStorage {
     event log_addr(bytes32, address);
     event log(bytes32);
 
-    constructor () public ShellStorage () { 
+    constructor () public ComponentStorage () {
 
     }
 

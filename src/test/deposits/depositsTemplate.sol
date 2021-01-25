@@ -13,10 +13,10 @@ contract SelectiveDepositTemplate is Setup {
     using ABDKMath64x64 for uint;
     using ABDKMath64x64 for int128;
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
-    Shell s;
-    Shell s2;
+    Component s;
+    Component s2;
 
     event log_uint(bytes32, uint256);
 

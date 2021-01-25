@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
-import "../../Shell.sol";
+import "../../Component.sol";
 
 library AssimilatorMethods {
 
@@ -81,10 +81,10 @@ library AssimilatorMethods {
 
 library ShellMethods {
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
     function deposit (
-        Shell shell,
+        Component shell,
         address[] memory _flvrs,
         uint256[] memory _amts
     ) internal returns (uint256 shells_) {
@@ -94,7 +94,7 @@ library ShellMethods {
     }
 
     function deposit (
-        Shell shell,
+        Component shell,
         address _token,
         uint256 _amt
     ) internal returns (uint256 shells_) {
@@ -108,7 +108,7 @@ library ShellMethods {
     }
 
     function deposit (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -127,7 +127,7 @@ library ShellMethods {
     }
 
     function deposit (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -150,7 +150,7 @@ library ShellMethods {
     }
 
     function deposit (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -177,7 +177,7 @@ library ShellMethods {
     }
 
     function viewDeposit (
-        Shell shell,
+        Component shell,
         address[] memory _flvrs,
         uint256[] memory _amts
     ) internal returns (uint256 shells_) {
@@ -187,7 +187,7 @@ library ShellMethods {
     }
 
     function viewDeposit (
-        Shell shell,
+        Component shell,
         address _token,
         uint256 _amt
     ) internal returns (uint256 shells_) {
@@ -201,7 +201,7 @@ library ShellMethods {
     }
 
     function viewDeposit (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -220,7 +220,7 @@ library ShellMethods {
     }
 
     function viewDeposit (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -243,7 +243,7 @@ library ShellMethods {
     }
 
     function viewDeposit (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -270,7 +270,7 @@ library ShellMethods {
     }
 
     function depositSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -303,7 +303,7 @@ library ShellMethods {
     }
 
     function depositSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -332,7 +332,7 @@ library ShellMethods {
     }
 
     function depositSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -357,7 +357,7 @@ library ShellMethods {
     }
 
     function depositSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1
     ) internal returns (bool success_) {
@@ -378,7 +378,7 @@ library ShellMethods {
     }
 
     function withdraw (
-        Shell shell,
+        Component shell,
         address[] memory _flvrs,
         uint256[] memory _amts
     ) internal returns (uint256 shells_) {
@@ -388,7 +388,7 @@ library ShellMethods {
     }
 
     function withdraw (
-        Shell shell,
+        Component shell,
         address _token,
         uint256 _amt
     ) internal returns (uint256 shells_) {
@@ -402,7 +402,7 @@ library ShellMethods {
     }
 
     function withdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -421,7 +421,7 @@ library ShellMethods {
     }
 
     function withdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -444,7 +444,7 @@ library ShellMethods {
     }
 
     function withdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -471,7 +471,7 @@ library ShellMethods {
     }
 
     function viewWithdraw (
-        Shell shell,
+        Component shell,
         address[] memory _flvrs,
         uint256[] memory _amts
     ) internal returns (uint256 shells_) {
@@ -481,7 +481,7 @@ library ShellMethods {
     }
 
     function viewWithdraw (
-        Shell shell,
+        Component shell,
         address _token,
         uint256 _amt
     ) internal returns (uint256 shells_) {
@@ -495,7 +495,7 @@ library ShellMethods {
     }
 
     function viewWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -514,7 +514,7 @@ library ShellMethods {
     }
 
     function viewWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -537,7 +537,7 @@ library ShellMethods {
     }
 
     function viewWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -564,7 +564,7 @@ library ShellMethods {
     }
 
     function withdrawSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -597,7 +597,7 @@ library ShellMethods {
     }
 
     function withdrawSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -626,7 +626,7 @@ library ShellMethods {
     }
 
     function withdrawSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1,
         address _token2,
@@ -651,7 +651,7 @@ library ShellMethods {
     }
 
     function withdrawSuccess (
-        Shell shell,
+        Component shell,
         address _token1,
         uint256 _amt1
     ) internal returns (bool success_) {
@@ -672,7 +672,7 @@ library ShellMethods {
     }
 
     function originSwap (
-        Shell shell,
+        Component shell,
         address _origin,
         address _target,
         uint256 _originAmount
@@ -683,7 +683,7 @@ library ShellMethods {
     }
 
     function originSwapSuccess (
-        Shell shell,
+        Component shell,
         address _origin,
         address _target,
         uint256 _originAmount
@@ -701,7 +701,7 @@ library ShellMethods {
     }
 
     function targetSwap (
-        Shell shell,
+        Component shell,
         address _origin,
         address _target,
         uint256 _targetAmount
@@ -712,7 +712,7 @@ library ShellMethods {
     }
 
     function targetSwapSuccess (
-        Shell shell,
+        Component shell,
         address _origin,
         address _target,
         uint256 _targetAmount
@@ -730,7 +730,7 @@ library ShellMethods {
     }
 
     function partitionedWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint _amount1
     ) internal returns (uint[] memory) {
@@ -747,7 +747,7 @@ library ShellMethods {
 
 
     function partitionedWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint _amount1,
         address _token2,
@@ -767,7 +767,7 @@ library ShellMethods {
     }
 
     function partitionedWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint _amount1,
         address _token2,
@@ -791,7 +791,7 @@ library ShellMethods {
     }
 
     function partitionedWithdraw (
-        Shell shell,
+        Component shell,
         address _token1,
         uint _amount1,
         address _token2,

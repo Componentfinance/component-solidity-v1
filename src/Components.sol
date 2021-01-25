@@ -13,13 +13,13 @@
 
 pragma solidity ^0.5.0;
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
 import "./Assimilators.sol";
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
-library Shells {
+library Components {
 
     using ABDKMath64x64 for int128;
 
@@ -42,8 +42,8 @@ library Shells {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(ShellStorage.Shell storage shell, address recipient, uint256 amount) external returns (bool) {
-        _transfer(shell, msg.sender, recipient, amount);
+    function transfer(ComponentStorage.Component storage component, address recipient, uint256 amount) external returns (bool) {
+        _transfer(component, msg.sender, recipient, amount);
         return true;
     }
 
@@ -54,8 +54,8 @@ library Shells {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(ShellStorage.Shell storage shell, address spender, uint256 amount) external returns (bool) {
-        _approve(shell, msg.sender, spender, amount);
+    function approve(ComponentStorage.Component storage component, address spender, uint256 amount) external returns (bool) {
+        _approve(component, msg.sender, spender, amount);
         return true;
     }
 
@@ -71,9 +71,9 @@ library Shells {
      * - the caller must have allowance for `sender`'s tokens of at least
      * `amount`
      */
-    function transferFrom(ShellStorage.Shell storage shell, address sender, address recipient, uint256 amount) external returns (bool) {
-        _transfer(shell, sender, recipient, amount);
-        _approve(shell, sender, msg.sender, sub(shell.allowances[sender][msg.sender], amount, "Shell/insufficient-allowance"));
+    function transferFrom(ComponentStorage.Component storage component, address sender, address recipient, uint256 amount) external returns (bool) {
+        _transfer(component, sender, recipient, amount);
+        _approve(component, sender, msg.sender, sub(component.allowances[sender][msg.sender], amount, "Component/insufficient-allowance"));
         return true;
     }
 
@@ -89,8 +89,8 @@ library Shells {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(ShellStorage.Shell storage shell, address spender, uint256 addedValue) external returns (bool) {
-        _approve(shell, msg.sender, spender, add(shell.allowances[msg.sender][spender], addedValue, "Shell/approval-overflow"));
+    function increaseAllowance(ComponentStorage.Component storage component, address spender, uint256 addedValue) external returns (bool) {
+        _approve(component, msg.sender, spender, add(component.allowances[msg.sender][spender], addedValue, "Component/approval-overflow"));
         return true;
     }
 
@@ -108,8 +108,8 @@ library Shells {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(ShellStorage.Shell storage shell, address spender, uint256 subtractedValue) external returns (bool) {
-        _approve(shell, msg.sender, spender, sub(shell.allowances[msg.sender][spender], subtractedValue, "Shell/allowance-decrease-underflow"));
+    function decreaseAllowance(ComponentStorage.Component storage component, address spender, uint256 subtractedValue) external returns (bool) {
+        _approve(component, msg.sender, spender, sub(component.allowances[msg.sender][spender], subtractedValue, "Component/allowance-decrease-underflow"));
         return true;
     }
 
@@ -127,12 +127,12 @@ library Shells {
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(ShellStorage.Shell storage shell, address sender, address recipient, uint256 amount) private {
+    function _transfer(ComponentStorage.Component storage component, address sender, address recipient, uint256 amount) private {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
-        shell.balances[sender] = sub(shell.balances[sender], amount, "Shell/insufficient-balance");
-        shell.balances[recipient] = add(shell.balances[recipient], amount, "Shell/transfer-overflow");
+        component.balances[sender] = sub(component.balances[sender], amount, "Component/insufficient-balance");
+        component.balances[recipient] = add(component.balances[recipient], amount, "Component/transfer-overflow");
         emit Transfer(sender, recipient, amount);
     }
 
@@ -150,11 +150,11 @@ library Shells {
      * - `_owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(ShellStorage.Shell storage shell, address _owner, address spender, uint256 amount) private {
+    function _approve(ComponentStorage.Component storage component, address _owner, address spender, uint256 amount) private {
         require(_owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
-        shell.allowances[_owner][spender] = amount;
+        component.allowances[_owner][spender] = amount;
         emit Approval(_owner, spender, amount);
     }
 

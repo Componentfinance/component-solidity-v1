@@ -15,9 +15,9 @@ pragma solidity ^0.5.0;
 
 import "./Assimilators.sol";
 
-import "./ShellMath.sol";
+import "./ComponentMath.sol";
 
-import "./ShellStorage.sol";
+import "./ComponentStorage.sol";
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
@@ -35,7 +35,7 @@ library Orchestrator {
     event AssimilatorIncluded(address indexed derivative, address indexed numeraire, address indexed reserve, address assimilator);
 
     function setParams (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         uint256 _alpha,
         uint256 _beta,
         uint256 _feeAtHalt,
@@ -43,49 +43,53 @@ library Orchestrator {
         uint256 _lambda
     ) external {
 
-        require(0 < _alpha && _alpha < 1e18, "Shell/parameter-invalid-alpha");
+        require(0 < _alpha && _alpha < 1e18, "Component/parameter-invalid-alpha");
 
-        require(0 <= _beta && _beta < _alpha, "Shell/parameter-invalid-beta");
+        require(0 <= _beta && _beta < _alpha, "Component/parameter-invalid-beta");
 
-        require(_feeAtHalt <= .5e18, "Shell/parameter-invalid-max");
+        require(_feeAtHalt <= .5e18, "Component/parameter-invalid-max");
 
-        require(0 <= _epsilon && _epsilon <= .01e18, "Shell/parameter-invalid-epsilon");
+        require(0 <= _epsilon && _epsilon <= .01e18, "Component/parameter-invalid-epsilon");
 
-        require(0 <= _lambda && _lambda <= 1e18, "Shell/parameter-invalid-lambda");
+        require(0 <= _lambda && _lambda <= 1e18, "Component/parameter-invalid-lambda");
 
-        int128 _omega = getFee(shell);
+        int128 _omega = getFee(component);
 
-        shell.alpha = (_alpha + 1).divu(1e18);
+        component.alpha = (_alpha + 1).divu(1e18);
 
-        shell.beta = (_beta + 1).divu(1e18);
+        component.beta = (_beta + 1).divu(1e18);
 
-        shell.delta = ( _feeAtHalt ).divu(1e18).div(uint(2).fromUInt().mul(shell.alpha.sub(shell.beta))) + ONE_WEI;
+        component.delta = ( _feeAtHalt ).divu(1e18).div(uint(2).fromUInt().mul(component.alpha.sub(component.beta))) + ONE_WEI;
 
-        shell.epsilon = (_epsilon + 1).divu(1e18);
+        component.epsilon = (_epsilon + 1).divu(1e18);
 
-        shell.lambda = (_lambda + 1).divu(1e18);
+        component.lambda = (_lambda + 1).divu(1e18);
+
+        component.sigma = (_sigma + 1).divu(1e18);
+
+        component.protocol = _protocol;
         
-        int128 _psi = getFee(shell);
+        int128 _psi = getFee(component);
         
-        require(_omega >= _psi, "Shell/parameters-increase-fee");
+        require(_omega >= _psi, "Component/parameters-increase-fee");
 
-        emit ParametersSet(_alpha, _beta, shell.delta.mulu(1e18), _epsilon, _lambda);
+        emit ParametersSet(_alpha, _beta, component.delta.mulu(1e18), _epsilon, _lambda);
 
     }
 
     function getFee (
-        ShellStorage.Shell storage shell
+        ComponentStorage.Component storage component
     ) private view returns (
         int128 fee_
     ) {
 
         int128 _gLiq;
 
-        int128[] memory _bals = new int128[](shell.assets.length);
+        int128[] memory _bals = new int128[](component.assets.length);
 
         for (uint i = 0; i < _bals.length; i++) {
 
-            int128 _bal = Assimilators.viewNumeraireBalance(shell.assets[i].addr);
+            int128 _bal = Assimilators.viewNumeraireBalance(component.assets[i].addr);
 
             _bals[i] = _bal;
 
@@ -93,13 +97,13 @@ library Orchestrator {
 
         }
 
-        fee_ = ShellMath.calculateFee(_gLiq, _bals, shell.beta, shell.delta, shell.weights);
+        fee_ = ComponentMath.calculateFee(_gLiq, _bals, component.beta, component.delta, component.weights);
 
     }
     
  
     function initialize (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address[] storage numeraires,
         address[] storage reserves,
         address[] storage derivatives,
@@ -119,7 +123,7 @@ library Orchestrator {
             if (_assets[ix] != _assets[2+ix]) derivatives.push(_assets[2+ix]);
             
             includeAsset(
-                shell,
+                component,
                 _assets[ix],   // numeraire
                 _assets[1+ix], // numeraire assimilator
                 _assets[2+ix], // reserve
@@ -137,7 +141,7 @@ library Orchestrator {
             derivatives.push(_derivativeAssimilators[ix]);
 
             includeAssimilator(
-                shell,
+                component,
                 _derivativeAssimilators[ix],   // derivative
                 _derivativeAssimilators[1+ix], // numeraire
                 _derivativeAssimilators[2+ix], // reserve
@@ -150,7 +154,7 @@ library Orchestrator {
     }
 
     function includeAsset (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address _numeraire,
         address _numeraireAssim,
         address _reserve,
@@ -159,35 +163,35 @@ library Orchestrator {
         uint256 _weight
     ) private {
 
-        require(_numeraire != address(0), "Shell/numeraire-cannot-be-zeroth-adress");
+        require(_numeraire != address(0), "Component/numeraire-cannot-be-zeroth-adress");
 
-        require(_numeraireAssim != address(0), "Shell/numeraire-assimilator-cannot-be-zeroth-adress");
+        require(_numeraireAssim != address(0), "Component/numeraire-assimilator-cannot-be-zeroth-adress");
 
-        require(_reserve != address(0), "Shell/reserve-cannot-be-zeroth-adress");
+        require(_reserve != address(0), "Component/reserve-cannot-be-zeroth-adress");
 
-        require(_reserveAssim != address(0), "Shell/reserve-assimilator-cannot-be-zeroth-adress");
+        require(_reserveAssim != address(0), "Component/reserve-assimilator-cannot-be-zeroth-adress");
 
-        require(_weight < 1e18, "Shell/weight-must-be-less-than-one");
+        require(_weight < 1e18, "Component/weight-must-be-less-than-one");
 
         if (_numeraire != _reserve) safeApprove(_numeraire, _reserveApproveTo, uint(-1));
 
-        ShellStorage.Assimilator storage _numeraireAssimilator = shell.assimilators[_numeraire];
+        ComponentStorage.Assimilator storage _numeraireAssimilator = component.assimilators[_numeraire];
 
         _numeraireAssimilator.addr = _numeraireAssim;
 
-        _numeraireAssimilator.ix = uint8(shell.assets.length);
+        _numeraireAssimilator.ix = uint8(component.assets.length);
 
-        ShellStorage.Assimilator storage _reserveAssimilator = shell.assimilators[_reserve];
+        ComponentStorage.Assimilator storage _reserveAssimilator = component.assimilators[_reserve];
 
         _reserveAssimilator.addr = _reserveAssim;
 
-        _reserveAssimilator.ix = uint8(shell.assets.length);
+        _reserveAssimilator.ix = uint8(component.assets.length);
 
         int128 __weight = _weight.divu(1e18).add(uint256(1).divu(1e18));
 
-        shell.weights.push(__weight);
+        component.weights.push(__weight);
 
-        shell.assets.push(_numeraireAssimilator);
+        component.assets.push(_numeraireAssimilator);
 
         emit AssetIncluded(_numeraire, _reserve, _weight);
 
@@ -202,7 +206,7 @@ library Orchestrator {
     }
     
     function includeAssimilator (
-        ShellStorage.Shell storage shell,
+        ComponentStorage.Component storage component,
         address _derivative,
         address _numeraire,
         address _reserve,
@@ -210,19 +214,19 @@ library Orchestrator {
         address _derivativeApproveTo
     ) private {
 
-        require(_derivative != address(0), "Shell/derivative-cannot-be-zeroth-address");
+        require(_derivative != address(0), "Component/derivative-cannot-be-zeroth-address");
 
-        require(_numeraire != address(0), "Shell/numeraire-cannot-be-zeroth-address");
+        require(_numeraire != address(0), "Component/numeraire-cannot-be-zeroth-address");
 
-        require(_reserve != address(0), "Shell/numeraire-cannot-be-zeroth-address");
+        require(_reserve != address(0), "Component/numeraire-cannot-be-zeroth-address");
 
-        require(_assimilator != address(0), "Shell/assimilator-cannot-be-zeroth-address");
+        require(_assimilator != address(0), "Component/assimilator-cannot-be-zeroth-address");
         
         safeApprove(_numeraire, _derivativeApproveTo, uint(-1));
 
-        ShellStorage.Assimilator storage _numeraireAssim = shell.assimilators[_numeraire];
+        ComponentStorage.Assimilator storage _numeraireAssim = component.assimilators[_numeraire];
 
-        shell.assimilators[_derivative] = ShellStorage.Assimilator(_assimilator, _numeraireAssim.ix);
+        component.assimilators[_derivative] = ComponentStorage.Assimilator(_assimilator, _numeraireAssim.ix);
 
         emit AssimilatorIncluded(_derivative, _numeraire, _reserve, _assimilator);
 
@@ -240,8 +244,8 @@ library Orchestrator {
 
     }
 
-    function viewShell (
-        ShellStorage.Shell storage shell
+    function viewComponent(
+        ComponentStorage.Component storage component
     ) external view returns (
         uint alpha_,
         uint beta_,
@@ -250,15 +254,15 @@ library Orchestrator {
         uint lambda_
     ) {
 
-        alpha_ = shell.alpha.mulu(1e18);
+        alpha_ = component.alpha.mulu(1e18);
 
-        beta_ = shell.beta.mulu(1e18);
+        beta_ = component.beta.mulu(1e18);
 
-        delta_ = shell.delta.mulu(1e18);
+        delta_ = component.delta.mulu(1e18);
 
-        epsilon_ = shell.epsilon.mulu(1e18);
+        epsilon_ = component.epsilon.mulu(1e18);
 
-        lambda_ = shell.lambda.mulu(1e18);
+        lambda_ = component.lambda.mulu(1e18);
 
     }
 

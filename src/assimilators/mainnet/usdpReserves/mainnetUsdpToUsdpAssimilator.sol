@@ -13,40 +13,40 @@
 
 pragma solidity ^0.5.0;
 
-import "../../../ComponentStorage.sol";
-
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
 import "../../../interfaces/IERC20.sol";
 
 import "../../../interfaces/IAssimilator.sol";
 
-contract MainnetSBTCToSBTCAssimilator is IAssimilator {
+contract MainnetUsdpToUsdpAssimilator is IAssimilator {
 
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for uint256;
 
-    IERC20 constant sBTC = IERC20(0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6);
+    IERC20 constant usdp = IERC20(0x1456688345527bE1f37E9e627DA0837D6f08C925);
+
+    constructor () public { }
 
     function intakeRawAndGetBalance (uint256 _amount) public returns (int128 amount_, int128 balance_) {
 
-        bool _success = sBTC.transferFrom(msg.sender, address(this), _amount);
+        bool _success = usdp.transferFrom(msg.sender, address(this), _amount);
 
-        require(_success, "Shell/sBTC-transfer-from-failed");
+        require(_success, "Shell/USDP-transfer-from-failed");
 
-        uint256 _balance = sBTC.balanceOf(address(this));
-
-        amount_ = _amount.divu(1e18);
+        uint256 _balance = usdp.balanceOf(address(this));
 
         balance_ = _balance.divu(1e18);
+
+        amount_ = _amount.divu(1e18);
 
     }
 
     function intakeRaw (uint256 _amount) public returns (int128 amount_) {
 
-        bool _success = sBTC.transferFrom(msg.sender, address(this), _amount);
+        bool _success = usdp.transferFrom(msg.sender, address(this), _amount);
 
-        require(_success, "Shell/sBTC-transfer-from-failed");
+        require(_success, "Shell/USDP-transfer-from-failed");
 
         amount_ = _amount.divu(1e18);
 
@@ -54,21 +54,22 @@ contract MainnetSBTCToSBTCAssimilator is IAssimilator {
 
     function intakeNumeraire (int128 _amount) public returns (uint256 amount_) {
 
-        amount_ = _amount.mulu(1e18);
+        // truncate stray decimals caused by conversion
+        amount_ = _amount.mulu(1e18) / 1e3 * 1e3;
 
-        bool _success = sBTC.transferFrom(msg.sender, address(this), amount_);
+        bool _success = usdp.transferFrom(msg.sender, address(this), amount_);
 
-        require(_success, "Shell/sBTC-transfer-from-failed");
+        require(_success, "Shell/USDP-transfer-from-failed");
 
     }
 
     function outputRawAndGetBalance (address _dst, uint256 _amount) public returns (int128 amount_, int128 balance_) {
 
-        bool _success = sBTC.transfer(_dst, _amount);
+        bool _success = usdp.transfer(_dst, _amount);
 
-        require(_success, "Shell/sBTC-transfer-failed");
+        require(_success, "Shell/USDP-transfer-failed");
 
-        uint256 _balance = sBTC.balanceOf(address(this));
+        uint256 _balance = usdp.balanceOf(address(this));
 
         amount_ = _amount.divu(1e18);
 
@@ -78,51 +79,54 @@ contract MainnetSBTCToSBTCAssimilator is IAssimilator {
 
     function outputRaw (address _dst, uint256 _amount) public returns (int128 amount_) {
 
-        bool _success = sBTC.transfer(_dst, _amount);
+        bool _success = usdp.transfer(_dst, _amount);
 
-        require(_success, "Shell/sBTC-transfer-failed");
+        require(_success, "Shell/USDP-transfer-failed");
 
         amount_ = _amount.divu(1e18);
 
     }
 
+    // takes numeraire amount, transfers to destination, returns raw amount
     function outputNumeraire (address _dst, int128 _amount) public returns (uint256 amount_) {
 
         amount_ = _amount.mulu(1e18);
 
-        bool _success = sBTC.transfer(_dst, amount_);
+        bool _success = usdp.transfer(_dst, amount_);
 
-        require(_success, "Shelll/sBTC-transfer-failed");
-
-        return amount_;
+        require(_success, "Shell/USDP-transfer-failed");
 
     }
 
+    // takes numeraire amount, returns raw amount
     function viewRawAmount (int128 _amount) public view returns (uint256 amount_) {
 
         amount_ = _amount.mulu(1e18);
 
     }
 
+    // takes raw amount, returns numeraire amount
     function viewNumeraireAmount (uint256 _amount) public view returns (int128 amount_) {
 
         amount_ = _amount.divu(1e18);
 
     }
 
+    // returns numeraire value of reserve asset
     function viewNumeraireBalance (address _addr) public view returns (int128 balance_) {
 
-        uint256 _balance = sBTC.balanceOf(_addr);
+        uint256 _balance = usdp.balanceOf(_addr);
 
         balance_ = _balance.divu(1e18);
 
     }
 
+    // takes raw amount, returns numeraire amount
     function viewNumeraireAmountAndBalance (address _addr, uint256 _amount) public view returns (int128 amount_, int128 balance_) {
 
         amount_ = _amount.divu(1e18);
 
-        uint256 _balance = sBTC.balanceOf(_addr);
+        uint256 _balance = usdp.balanceOf(_addr);
 
         balance_ = _balance.divu(1e18);
 

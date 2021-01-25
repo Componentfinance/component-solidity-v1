@@ -3,13 +3,13 @@ pragma solidity ^0.5.0;
 
 import "ds-test/test.sol";
 
-import "../../Shell.sol";
+import "../../Component.sol";
 
 import "../setup/setup.sol";
 
 contract MiscSuiteOneTest is Setup, DSTest {
 
-    Shell s;
+    Component s;
 
     function setUp() public {
 

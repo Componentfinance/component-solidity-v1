@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../../Shell.sol";
+import "../../Component.sol";
 
 import "../../interfaces/IERC20.sol";
 import "../../interfaces/IERC20NoBool.sol";
@@ -15,7 +15,7 @@ contract ShellSetup is StorageSetup {
 
     event log_uint(bytes32, uint256);
 
-    function setParamsSetOne (Shell _shell) public {
+    function setParamsSetOne (Component _shell) public {
 
         uint256 _alpha = .5e18;
         uint256 _beta = .25e18;
@@ -27,7 +27,7 @@ contract ShellSetup is StorageSetup {
 
     }
 
-    function setParamsSetTwo (Shell _shell) public {
+    function setParamsSetTwo (Component _shell) public {
 
        uint256 _alpha = .5e18;
        uint256 _beta = .25e18;
@@ -39,7 +39,7 @@ contract ShellSetup is StorageSetup {
 
     }
 
-    function setParamsSetThree (Shell _shell) public {
+    function setParamsSetThree (Component _shell) public {
 
         uint256 _alpha = .5e18;
         uint256 _beta = .25e18;
@@ -51,7 +51,7 @@ contract ShellSetup is StorageSetup {
 
     }
 
-    function setParamsSetFour (Shell _shell) public {
+    function setParamsSetFour (Component _shell) public {
 
         uint256 _alpha = .5e18;
         uint256 _beta = .48e18;
@@ -63,7 +63,7 @@ contract ShellSetup is StorageSetup {
 
     }
 
-    function setParamsSetFive (Shell _shell) public {
+    function setParamsSetFive (Component _shell) public {
 
         uint256 _alpha = .9e18;
         uint256 _beta = .4e18;

@@ -8,10 +8,10 @@ import "../setup/methods.sol";
 
 contract ContinuitySuiteSix is Setup, DSTest {
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
-    Shell s;
-    Shell s2;
+    Component s;
+    Component s2;
 
     function setUp() public {
 

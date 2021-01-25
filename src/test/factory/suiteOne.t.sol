@@ -15,7 +15,7 @@ contract ShellFactorySuiteOne is SelectiveDepositTemplate, DSTest {
     using ABDKMath64x64 for uint;
     using ABDKMath64x64 for int128;
 
-    using ShellMethods for Shell;
+    using ShellMethods for Component;
 
     ShellFactory lf;
 
@@ -25,7 +25,7 @@ contract ShellFactorySuiteOne is SelectiveDepositTemplate, DSTest {
 
     }
 
-    function setupSuiteOneParameters (Shell _l) public {
+    function setupSuiteOneParameters (Component _l) public {
 
         // _l.TEST_includeAssimilatorState(
         //     dai, cdai, chai, pot,
@@ -46,7 +46,7 @@ contract ShellFactorySuiteOne is SelectiveDepositTemplate, DSTest {
 
     }
 
-    function newShell () public returns (Shell shell_) {
+    function newShell () public returns (Component shell_) {
         
         address[] memory _assets = new address[](0);
         uint[] memory _weights = new uint[](0);
