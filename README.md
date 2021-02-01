@@ -7,10 +7,13 @@ Component Protocol is an automated market maker for assets of the same numeraire
 Component Protocol is currently deployed to mainnet at the following addresses
 
 * [Component Protocol 50% USDP,25% USDC,25% USDT Pool](https://etherscan.io/address/0x49519631B404E06ca79C9C7b0dC91648D86F08db)
+* [Component Protocol 50% USDP,25% DAI,25% sUSD Pool](https://etherscan.io/address/0x6477960dd932d29518d7e8087d5ea3d11e606068)
 * Assimilator Contracts
   * [USDP to USDP Assimilator](https://etherscan.io/address/0x70f648c442eFa7007E7e4323e14e7Bdc800Bd0cf#code)
   * [USDC to USDC Assimilator](https://etherscan.io/address/0xAD6E6594e2E9Cca9326dd80BFFD7BaEf4e2a10F1#code)
   * [USDT to USDT Assimilator](https://etherscan.io/address/0x57813e8D1E77c069e66d0BCE3729288Ac4d6f0c8#code)
+  * [DAI to DAI Assimilator](https://etherscan.io/address/0x2f4184f73634775cd929c081d6e15ca8f3ff5fab#code)
+  * [SUSD to SUSD Assimilator](https://etherscan.io/address/0x721e5380627e8aB1a3636eDeAB05994fc0406beD#code)
 
 
 ## Security
