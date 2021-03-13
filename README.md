@@ -8,9 +8,11 @@ Component Protocol is currently deployed to mainnet at the following addresses
 
 * [Component 50% USDP,25% USDC,25% USDT Pool](https://etherscan.io/address/0x49519631B404E06ca79C9C7b0dC91648D86F08db)
 * [Component 50% USDP,25% DAI,25% sUSD Pool](https://etherscan.io/address/0x6477960dd932d29518d7e8087d5ea3d11e606068)
-* [Component 50% USDP,25% WXDAI,25% USDC Pool](https://blockscout.com/poa/xdai/address/0x53De001bbfAe8cEcBbD6245817512F8DBd8EEF18)
-* [Component 50% WXDAI,50% Dai(bsc) Pool](https://blockscout.com/poa/xdai/address/0xF82fc0ecBf3ff8e253a262447335d3d8A72CD028)
-* [Component 25% DAI(bsc),25% USDC(bsc),25% USDC,25% WXDAI Pool](https://blockscout.com/poa/xdai/address/0xfbbd0F67cEbCA3252717E66c1Ed1E97ad8B06377)
+* [Component 50% USDP,25% WXDAI,25% USDC Pool](https://blockscout.com/poa/xdai/address/0x53De001bbfAe8cEcBbD6245817512F8DBd8EEF18) (xDai)
+* [Component 50% WXDAI,50% Dai(bsc) Pool](https://blockscout.com/poa/xdai/address/0xF82fc0ecBf3ff8e253a262447335d3d8A72CD028) (xDai)
+* [Component 25% DAI(bsc),25% USDC(bsc),25% USDC,25% WXDAI Pool](https://blockscout.com/poa/xdai/address/0xfbbd0F67cEbCA3252717E66c1Ed1E97ad8B06377) (xDai)
+* [Component 50% USDP,25% BUSD,25% USDT Pool](https://bscscan.com/address/0xcf76a0ceDf50DA184FDef08A9d04E6829D7FefDF) (BSC)
+* [Component 45% BUSD,45% USDT,10% USDC Pool](https://bscscan.com/address/0x3Bb6Bf6EcBC71f8f78D1Eec9c91de4f8Fd5C891c) (BSC)
 * Assimilator Contracts on Ethereum
   * [USDP Assimilator](https://etherscan.io/address/0x70f648c442eFa7007E7e4323e14e7Bdc800Bd0cf#code)
   * [USDC Assimilator](https://etherscan.io/address/0xAD6E6594e2E9Cca9326dd80BFFD7BaEf4e2a10F1#code)
@@ -23,6 +25,11 @@ Component Protocol is currently deployed to mainnet at the following addresses
   * [WXDAI Assimilator](https://blockscout.com/poa/xdai/address/0x238139bF999f389063444e397cDfadF780ec57DB/contracts) 0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d
   * [DAI(bsc) Assimilator](https://blockscout.com/poa/xdai/address/0xc1b303C0A40b02395bBDBf20fCEe21796dbC5f61/contracts) 0xFc8B2690F66B46fEC8B3ceeb95fF4Ac35a0054BC
   * [USDC(bsc) Assimilator](https://blockscout.com/poa/xdai/address/0xc7e06837595336559ee2A23045fdc9713B2E3037/contracts) 0xD10Cc63531a514BBa7789682E487Add1f15A51E2
+* Assimilator Contracts on BSC
+  * [USDP Assimilator](https://bscscan.com/address/0xe2722579f525d02576799934072efb50441d452f/contracts) 0xDACD011A71f8c9619642bf482f1D4CeB338cfFCf
+  * [BUSD Assimilator](https://bscscan.com/address/0x7b57f2f49e87b0c622269d025e3be93fba57406e/contracts) 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56
+  * [USDT Assimilator](https://bscscan.com/address/0x39dcad1a118d6786b1225c1b8140de9ba0e0e57c/contracts) 0x55d398326f99059fF775485246999027B3197955
+  * [USDC Assimilator](https://bscscan.com/address/0xE5481B3b4e78811eE565eb4aF4aABf3F23469b33/contracts) 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d
 
 
 ## Security
